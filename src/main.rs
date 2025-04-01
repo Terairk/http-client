@@ -1,4 +1,4 @@
-use std::{env, fmt, io, time::Duration};
+use std::env;
 
 use crate::client::download_full_data;
 use crate::sha::calculate_sha256;
@@ -7,28 +7,6 @@ use error::DownloadError;
 mod client;
 mod error;
 mod sha;
-
-const CHUNK_SIZE: u64 = 32 * 1024; // 32 KiB chunk size to not truncate
-const MAX_RETRIES: u32 = 10; // Max retries per chunk
-const RETRY_DELAY: Duration = Duration::from_millis(500);
-const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
-const READ_TIMEOUT: Duration = Duration::from_secs(10);
-
-struct HttpResponse {
-    status_code: u16,
-    headers: Vec<(String, String)>,
-    body: Vec<u8>,
-}
-
-impl HttpResponse {
-    // Get's the value of a header
-    fn get_header(&self, name: &str) -> Option<&str> {
-        self.headers
-            .iter()
-            .find(|(h_name, _)| h_name.eq_ignore_ascii_case(name))
-            .map(|(_, h_value)| h_value.as_str())
-    }
-}
 
 fn main() -> Result<(), DownloadError> {
     let args: Vec<String> = env::args().collect();

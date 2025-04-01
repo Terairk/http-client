@@ -10,6 +10,7 @@ pub fn calculate_sha256(data: &[u8]) -> String {
     let result = hasher.finalize();
 
     // Convert bytes to hex string manually. result is a 32 byte array
+    // I'm surprised that it works but ig the sha2 crate writers implemented LowerHex trait already
     format!("{:x}", result)
 }
 
