@@ -10,40 +10,40 @@ mod sha;
 
 fn main() -> Result<(), DownloadError> {
     let args: Vec<String> = env::args().collect();
-    // Expect 4 arguments: command, address, hash, size
+    // Expect 3 arguments: command, hash, size
     // Hash and size are printed by the server so might as well use it
     // Technically speaking, we don't need the hash as we could verify manually but makes it easier
     // to check our work
     // Furthermore, we don't need the size to be passed at the CLI, because
     // judging by the Python HTTP Server: We could just get the total length by not passing in a
     // range initially. But this reduces my burden slightly.
+    // NOTE: Update, for some reason, my code can't handle truncated data, ends up with a truncated
+    // data error. Perhaps I can figure out how to fix this
     // Unfortunately the server doesn't follow the HTTP Specification where it should actually send
     // a Content-Range header if a range is being sent to it. ie Content-Range:
     // <start>-<end>/<total>
-    if args.len() != 4 {
+    if args.len() != 3 {
         eprintln!(
-            "Usage: {} <server_address> <total_size_bytes> <expected_sha256_hash>",
+            "Usage: {} <total_size_bytes> <expected_sha256_hash>",
             args[0]
         );
-        eprintln!("Example: {} 127.0.0.1:8080 450 986f52d9...", args[0]);
+        eprintln!("Example: {} 450 986f52d9...", args[0]);
         return Err(DownloadError::Args("Invalid number of arguments".into()));
     }
 
-    let server_address = &args[1];
-    let total_size: u64 = args[2].parse().map_err(|_| {
+    let total_size: u64 = args[1].parse().map_err(|_| {
         DownloadError::Args(format!(
             "Invalid total size provided: {}. Must be a non-negative integer",
-            args[2]
+            args[1]
         ))
     })?;
-    let expected_hash = args[3].to_lowercase();
+    let expected_hash = args[2].to_lowercase();
 
-    println!("Target Server: {server_address}");
     println!("Expected SHA-256 Hash: {expected_hash}");
     println!("Expected Total Size: {total_size} bytes");
 
     // Download data using the provided total_size. Largest function by far
-    let downloaded_data = download_full_data(server_address, total_size)?;
+    let downloaded_data = download_full_data(total_size)?;
 
     // Verify downloaded size just in case (sanity check, perhaps remove this later)
     if downloaded_data.len() as u64 != total_size {

@@ -3,7 +3,7 @@ This is my code for the task written in Rust.
 ## External Library Notice for SHA-256 implementation
 The task did say to try not to use any external libraries however 
 Rust doesn't have a built SHA-256 implementation while Kotlin does
-via java.security.MessageDigest so I think it's only fair to use it for Rust. 
+via java.security. MessageDigest so I think it's only fair to use it for Rust. 
 
 Furthermore, implementing SHA-256 by hand is error prone (though it would be nice 
 as a coding exercise but for now I'll use a crate for maximum security and correctness).
@@ -20,13 +20,24 @@ Also my code assumes that we know the server implementation and know how it work
 so we use chunks less than the truncated threshold of 64 KiB. 
 If we didn't know these, the code would be more complicated however it depends on what gets changed.
 
-###
-Scenario 1: Threshold gets smaller but stays constant, in this case I can just adjust my CHUNK_SIZE constant.
+Also we take in the content length on the command line simply because my logic can't quite decouple the logic 
+of extracting the content-length without requesting a lot of bytes. Causes a network error in my program. 
+Could be worth looking into to improve the ergonomics of the program but it isn't the biggest deal.
+
+### Scenario 1: Threshold gets smaller but stays constant
+In this case I can just adjust my CHUNK_SIZE constant.
 It'd be pretty fast to find the threshold through manual testing of a black-box web server. 
 
-###
-Scenario 2: Threshold changes however threshold varies for seemingly no reason
-In this instance, some of my code would need to be overhauled to also perhaps do some binary search 
+### Scenario 2: Threshold changes however threshold varies for seemingly no reason
+In this instance, some of my code would need to be overhauled to also perhaps do some binary/linear search 
 of a good CHUNK_SIZE to do it on. ie start with a large value for CHUNK_SIZE and reduce it at runtime everytime
 a truncation occurs. We can tell if truncation occurs because the Content-Length returned will be not what we
-expected. Ofc CHUNK_SIZE will have to stop being a compile time constant and instead be a runtime constant.
+expected. Of course, CHUNK_SIZE will have to stop being a compile time constant and instead be a runtime constant.
+I'd change my logic to not expect x amount of bytes per chunk and instead make one of my functions return
+how many bytes it did receive up to. Therefore each "chunk" can be of variable size
+
+## Potential Improvements
+Other than making my code more general and being able to handle the aforementioned scenario 2. 
+If I could use external libraries: I'd make my code multi-threaded using an async-runtime such as tokio 
+though multi-threaded code together with Scenario 2 handling would be pretty tricky. 
+It's much easier to make it multi-threaded with constant size chunks

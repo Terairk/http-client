@@ -11,17 +11,18 @@ const MAX_RETRIES: u32 = 10; // Max retries per chunk
 const RETRY_DELAY: Duration = Duration::from_millis(500);
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
 const READ_TIMEOUT: Duration = Duration::from_secs(10);
+const SERVER_ADDR: &str = "127.0.0.1:8080";
 
 struct HttpResponse {
     status_code: u16,
-    // diagnostic headers
-    headers: Vec<(String, String)>,
+    // diagnostic headers, may be helpful down the line
+    // headers: Vec<(String, String)>,
     body: Vec<u8>,
 }
 
 // For now keep this function signature if we ever need to give Errors
 #[inline]
-pub fn download_full_data(address: &str, total_size: u64) -> Result<Vec<u8>, DownloadError> {
+pub fn download_full_data(total_size: u64) -> Result<Vec<u8>, DownloadError> {
     if total_size == 0 {
         return Ok(Vec::new());
     }
@@ -42,8 +43,7 @@ pub fn download_full_data(address: &str, total_size: u64) -> Result<Vec<u8>, Dow
         // Could instead make a Logic Variant for DownloadError so clients could give better
         // diagonistics if things fail but ideally those never happen.
         debug_assert!(chunk_start <= chunk_end, "Chunk start is after end");
-
-        let chunk_data = download_chunk(address, chunk_start, chunk_end)?;
+        let chunk_data = download_chunk(SERVER_ADDR, chunk_start, chunk_end)?;
         let expected_len = (chunk_end - chunk_start + 1) as usize;
 
         // This implementation here would need to change if the server was a block_box
@@ -98,7 +98,7 @@ fn download_chunk(address: &str, start: u64, end: u64) -> Result<Vec<u8>, Downlo
         // actually respect the HTTP Range header
         // correctly I think, I might be wrong though
         let request_end = end.saturating_add(1);
-        match send_request(address, start, request_end) {
+        match send_request(address, Some((start, request_end))) {
             Ok(response) => {
                 // Debug print
                 // println!("Chunk Response Status: {}, Body Length: {}", response.status_code, response.body.len());
@@ -161,7 +161,8 @@ fn download_chunk(address: &str, start: u64, end: u64) -> Result<Vec<u8>, Downlo
     )))
 }
 
-fn send_request(address: &str, start: u64, end: u64) -> Result<HttpResponse, DownloadError> {
+// None means no Range provided, (start_inclusive, end_exclusive)
+fn send_request(address: &str, range: Option<(u64, u64)>) -> Result<HttpResponse, DownloadError> {
     // Perhaps we should construct this server_addr earlier so we don't parse as often
     // Also so that we return an error earlier
     let server_addr = address
@@ -183,7 +184,15 @@ fn send_request(address: &str, start: u64, end: u64) -> Result<HttpResponse, Dow
     );
 
     // Format the Range header value
-    request_str.push_str(&format!("Range: bytes={start}-{end}\r\n"));
+    if let Some((start, end)) = range {
+        // Ensure end is greater than start for a valid range request to the server
+        if end > start {
+            request_str.push_str(&format!("Range: bytes={}-{}\r\n", start, end));
+        } else {
+            // Not sure if this works but maybe
+            request_str.push_str(&format!("Range: bytes={}-{}\r\n", start, start));
+        }
+    } // No Range header if range is None
 
     request_str.push_str("\r\n");
 
@@ -232,7 +241,8 @@ fn parse_http_response<R: Read>(reader: &mut BufReader<R>) -> Result<HttpRespons
         }
     }
 
-    let response_headers = headers.clone();
+    // May be useful in the future
+    // let response_headers = headers.clone();
 
     let content_length = headers
         .iter()
@@ -275,9 +285,10 @@ fn parse_http_response<R: Read>(reader: &mut BufReader<R>) -> Result<HttpRespons
             )));
         }
     }
+
     Ok(HttpResponse {
         status_code,
-        headers: response_headers,
+        // headers: response_headers,
         body,
     })
 }
