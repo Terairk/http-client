@@ -1,4 +1,20 @@
 This is my code for the task written in Rust. 
+Just run 
+```bash 
+cargo build.
+```
+The python server run through 
+```bash
+python buggy_server.py
+```
+Then copy the length of data and the hash and run the rust client like 
+```bash
+./target/debug/glitchy-http <length> <hash>
+```
+ie 
+```
+./target/debug/glitchy-http 646863 2dd68fc089b24751559de2d45463341a780dd388f70d4053a5d49cef2cc19e6a
+```
 
 ## External Library Notice for SHA-256 implementation
 The task did say to try not to use any external libraries however 
