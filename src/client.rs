@@ -13,13 +13,6 @@ const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
 const READ_TIMEOUT: Duration = Duration::from_secs(10);
 const SERVER_ADDR: &str = "127.0.0.1:8080";
 
-struct HttpResponse {
-    status_code: u16,
-    // diagnostic headers, may be helpful down the line
-    // headers: Vec<(String, String)>,
-    body: Vec<u8>,
-}
-
 // For now keep this function signature if we ever need to give Errors
 #[inline]
 pub fn download_full_data(total_size: u64) -> Result<Vec<u8>, DownloadError> {
@@ -176,13 +169,3 @@ fn send_request(start: u64, end: u64) -> Result<Vec<u8>, DownloadError> {
         )),
     }
 }
-
-// impl HttpResponse {
-//     // Get's the value of a header
-//     fn get_header(&self, name: &str) -> Option<&str> {
-//         self.headers
-//             .iter()
-//             .find(|(h_name, _)| h_name.eq_ignore_ascii_case(name))
-//             .map(|(_, h_value)| h_value.as_str())
-//     }
-// }

@@ -4,7 +4,6 @@ use std::{fmt, io};
 pub enum DownloadError {
     Io(io::Error),
     Network(String),
-    Http(String),
     Parse(String),
     Logic(String), // This probably should be a panic instead tbh. Logic errors in client code
     // shouldn't be like this
@@ -17,7 +16,6 @@ impl fmt::Display for DownloadError {
         match self {
             DownloadError::Io(e) => write!(f, "IO Error: {e}"),
             DownloadError::Network(s) => write!(f, "Network Error: {s}"),
-            DownloadError::Http(s) => write!(f, "HTTP Error: {s}"),
             DownloadError::Parse(s) => write!(f, "Response Parse Error: {s}"),
             DownloadError::Logic(s) => write!(f, "Logic Error: {s}"),
             DownloadError::HashMismatch { expected, actual } => {
