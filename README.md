@@ -9,11 +9,15 @@ python buggy_server.py
 ```
 Then copy the length of data and the hash and run the rust client like 
 ```bash
-./target/debug/glitchy-http <length> <hash>
+./target/debug/glitchy-http <length> [<hash>]
 ```
 ie 
-```
+```bash
 ./target/debug/glitchy-http 646863 2dd68fc089b24751559de2d45463341a780dd388f70d4053a5d49cef2cc19e6a
+``` 
+Optionally you can also omit the expected hash and the hash will be outputted.
+```bash
+./target/debug/glitchy-http 646863
 ```
 
 # My Approach 

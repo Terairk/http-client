@@ -22,12 +22,13 @@ fn main() -> Result<(), DownloadError> {
     // Unfortunately the server doesn't follow the HTTP Specification where it should actually send
     // a Content-Range header if a range is being sent to it. ie Content-Range:
     // <start>-<end>/<total>
-    if args.len() != 3 {
+    if args.len() != 3 && args.len() != 2 {
         eprintln!(
-            "Usage: {} <total_size_bytes> <expected_sha256_hash>",
+            "Usage: {} <total_size_bytes> [<expected_sha256_hash>]",
             args[0]
         );
         eprintln!("Example: {} 450 986f52d9...", args[0]);
+        eprintln!("Alternatively: {} 450", args[0]);
         return Err(DownloadError::Args("Invalid number of arguments".into()));
     }
 
@@ -37,9 +38,7 @@ fn main() -> Result<(), DownloadError> {
             args[1]
         ))
     })?;
-    let expected_hash = args[2].to_lowercase();
 
-    println!("Expected SHA-256 Hash: {expected_hash}");
     println!("Expected Total Size: {total_size} bytes");
 
     // Download data using the provided total_size. Largest function by far
@@ -58,15 +57,18 @@ fn main() -> Result<(), DownloadError> {
     println!("Calculating SHA-256 hash of downloaded data...");
     let actual_hash = calculate_sha256(&downloaded_data);
     println!("Actual SHA-256:   {actual_hash}");
+    let expected_hash = args.get(2).map(|p| p.to_lowercase());
 
     // Compare hashes together, hope they match
-    if actual_hash != expected_hash {
-        return Err(DownloadError::HashMismatch {
-            expected: expected_hash,
-            actual: actual_hash,
-        });
+    if let Some(hash) = expected_hash {
+        if actual_hash != hash {
+            return Err(DownloadError::HashMismatch {
+                expected: hash,
+                actual: actual_hash,
+            });
+        }
+        println!("\nSuccess! Downloaded data matches the expected hash.");
     }
 
-    println!("\nSuccess! Downloaded data matches the expected hash.");
     Ok(())
 }
