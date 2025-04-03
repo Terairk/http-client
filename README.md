@@ -16,6 +16,11 @@ ie
 ./target/debug/glitchy-http 646863 2dd68fc089b24751559de2d45463341a780dd388f70d4053a5d49cef2cc19e6a
 ```
 
+# My Approach 
+Take in the expected length and hash as command line arguments. 
+Download the full data in chunks of a controllable size set in client.rs. 
+Get the SHA-256 hash using the sha-2 crate and then compare with the expected hash.
+
 ## External Library Notice for SHA-256 implementation
 The task did say to try not to use any external libraries however 
 Rust doesn't have a built SHA-256 implementation while Kotlin does
@@ -55,5 +60,8 @@ how many bytes it did receive up to. Therefore each "chunk" can be of variable s
 ## Potential Improvements
 Other than making my code more general and being able to handle the aforementioned scenario 2. 
 If I could use external libraries: I'd make my code multi-threaded using an async-runtime such as tokio 
+or even normal thread spawning
 though multi-threaded code together with Scenario 2 handling would be pretty tricky. 
-It's much easier to make it multi-threaded with constant size chunks
+It's much easier to make it multi-threaded with constant size chunks.
+Update: I just realised that the python server is single-threaded so making the multi-threaded client 
+won't make any difference as the server will still process things sequentially.
